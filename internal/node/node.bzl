@@ -35,9 +35,16 @@ def _write_loader_script(ctx):
         mapping = r"{module_name: /^%s\b/, module_root: '%s'}" % (escaped, mr)
         module_mappings.append(mapping)
   workspace = ctx.attr.node_modules.label.workspace_root.split("/")[1] if ctx.attr.node_modules.label.workspace_root else ctx.workspace_name
+
+  # Don't assume the node_modules folder is at the root of the package
+  node_modules_prefix = ""
+  if hasattr(ctx.attr.node_modules, "attr") and hasattr(ctx.attr.node_modules.attr, "node_modules_path_prefix"):
+    node_modules_prefix = ctx.attr.node_modules.attr.node_modules_path_prefix
+    
   node_modules_root = "/".join([f for f in [
       workspace,
       ctx.attr.node_modules.label.package,
+      node_modules_prefix,
       "node_modules"] if f])
   ctx.actions.expand_template(
       template=ctx.file._loader_template,
